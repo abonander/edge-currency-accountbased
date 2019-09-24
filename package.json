@@ -20,8 +20,8 @@
     "package.json",
     "README.md"
   ],
-  "main": "./index.js",
-  "module": "./lib/index.js",
+  "main": "./src/index.js",
+  "module": "./src/index.js",
   "scripts": {
     "build": "rimraf lib && sucrase ./src -q -d ./lib -t flow && webpack",
     "flow": "flow",
@@ -48,6 +48,7 @@
   "dependencies": {
     "@binance-chain/javascript-sdk": "^2.14.4",
     "@dapix/react-native-fio": "0.1.0",
+    "@hashgraph/sdk": "^0.6.1",
     "base-x": "^1.0.4",
     "biggystring": "^3.0.0",
     "bip39": "^3.0.2",
