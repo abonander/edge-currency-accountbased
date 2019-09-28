@@ -20,8 +20,8 @@
     "package.json",
     "README.md"
   ],
-  "main": "./src/index.js",
-  "module": "./src/index.js",
+  "main": "./index.js",
+  "module": "./lib/index.js",
   "scripts": {
     "build": "rimraf lib && sucrase ./src -q -d ./lib -t flow && webpack",
     "flow": "flow",

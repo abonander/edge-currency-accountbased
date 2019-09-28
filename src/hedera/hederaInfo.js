@@ -1,12 +1,10 @@
 /* global */
 // @flow
 
-import { type EdgeCurrencyInfo } from 'edge-core-js/types'
-
-import { imageServerUrl } from '../common/utils'
-import { type HederaSettings } from './hederaTypes.js'
-
 import { hbarUnitSymbols } from '@hashgraph/sdk'
+import { type EdgeCurrencyInfo } from 'edge-core-js/types'
+// import { imageServerUrl } from '../common/utils'
+import { type HederaSettings } from './hederaTypes.js'
 
 const otherSettings: HederaSettings = {
   hederaNodes: {
@@ -21,7 +19,7 @@ const defaultSettings: any = {
 
 export const currencyInfo: EdgeCurrencyInfo = {
   // Basic currency information:
-  currencyCode: 'XHB',
+  currencyCode: 'HBAR',
   displayName: 'Hedera HBAR',
   pluginName: 'hedera',
   walletType: 'wallet:hedera',
@@ -37,17 +35,18 @@ export const currencyInfo: EdgeCurrencyInfo = {
     // An array of Objects of the possible denominations for this currency
     // other denominations are specified but these are the most common
     {
-      name: 'XHB',
-      multiplier: '1',
-      symbol: hbarUnitSymbols.tinybar
-    },
-    {
-      name: 'XHB',
+      name: 'HBAR',
       multiplier: '100000000', // 100,000,000
       symbol: hbarUnitSymbols.hbar
+    },
+    {
+      name: 'tHBAR',
+      multiplier: '1',
+      symbol: hbarUnitSymbols.tinybar
     }
   ],
-  symbolImage: `${imageServerUrl}/hedera-logo-solo-64.png`,
-  symbolImageDarkMono: `${imageServerUrl}/hedera-logo-solo-64.png`,
+  // FIXME: upload to EDGE's image server
+  symbolImage: `http://10.0.2.2:8000/hedera-white.png`,
+  symbolImageDarkMono: `http://10.0.2.2:8000/hedera-black.png`,
   metaTokens: []
 }

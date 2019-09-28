@@ -3,6 +3,7 @@
  */
 // @flow
 
+import * as hedera from '@hashgraph/sdk'
 import {
   type EdgeCorePluginOptions,
   type EdgeCurrencyEngine,
@@ -17,10 +18,6 @@ import {
 import { CurrencyPlugin } from '../common/plugin.js'
 import { HederaEngine } from './hederaEngine.js'
 import { currencyInfo } from './hederaInfo.js'
-
-import * as hedera from '@hashgraph/sdk'
-
-const URI_PREFIX = 'web+hedera'
 
 export class HederaPlugin extends CurrencyPlugin {
   constructor (io: EdgeIo) {
@@ -59,57 +56,28 @@ export class HederaPlugin extends CurrencyPlugin {
   }
 
   async parseUri (uri: string): Promise<EdgeParsedUri> {
+    console.log('hederaPlugin/parseUri', uri)
+
     // tests `#` and `#.#.#`
     if (/^\d+(\.\d+\.\d+)?$/.test(uri.trim())) {
       return {
         publicAddress: uri
       }
-    } else {
-      throw new Error('unsupported wallet URI');
     }
+
+    return this.parseUriCommon(currencyInfo, uri, { 'hedera': true }, 'tHBAR')
+      .edgeParsedUri
   }
 
   async encodeUri (obj: EdgeEncodeUri): Promise<string> {
-    throw new Error('unimplemented')
-    /* const valid = this.checkAddress(obj.publicAddress)
-    if (!valid) {
-      throw new Error('InvalidPublicAddressError')
-    }
-    let amount
-    if (typeof obj.nativeAmount === 'string') {
-      const currencyCode: string = 'XLM'
-      const nativeAmount: string = obj.nativeAmount
-      const denom = getDenomInfo(currencyInfo, currencyCode)
-      if (!denom) {
-        throw new Error('InternalErrorInvalidCurrencyCode')
-      }
-      amount = bns.div(nativeAmount, denom.multiplier, 7)
-    }
-    if (!amount && !obj.label && !obj.message) {
-      return obj.publicAddress
-    } else {
-      let queryString: string = `destination=${obj.publicAddress}&`
-      if (amount) {
-        queryString += 'amount=' + amount + '&'
-      }
-      if (obj.label || obj.message) {
-        if (typeof obj.label === 'string') {
-          queryString += 'label=' + obj.label + '&'
-        }
-        if (typeof obj.message === 'string') {
-          queryString += 'msg=' + obj.message + '&'
-        }
-      }
-      queryString = queryString.substr(0, queryString.length - 1)
+    console.log('hederaPlugin/encodeUri', obj)
 
-      const serializeObj = {
-        scheme: URI_PREFIX,
-        path: 'pay',
-        query: queryString
-      }
-      const url = serialize(serializeObj)
-      return url
-    } */
+    if (!obj.nativeAmount) {
+      // don't encode as a URI, just return the public address
+      return obj.publicAddress
+    }
+
+    return this.encodeUriCommon(obj, 'hedera', obj.nativeAmount)
   }
 }
 
@@ -135,6 +103,20 @@ export function makeHederaPlugin (
     console.log('makeHederaPlugin/makeCurrencyEngine')
 
     const tools = await makeCurrencyTools()
+
+    const { hederaAccount } = walletInfo.keys
+
+    // `publicKey` gets aliased/overloaded as `publicAddress` and is our actual public identifier
+    // public keys in Hedera are not used for addressing wallets as they are not unique
+    // FIXME: better normalization is implemented in the SDK but not exposed yet
+    // https://github.com/hashgraph/hedera-sdk-js/pull/69
+    if (/^\d+$/.test(hederaAccount)) {
+      // if the account ID is just a single digit, assume account number with shard/realm of 0
+      walletInfo.keys.publicKey = `0.0.${walletInfo.keys.hederaAccount}`
+    } else {
+      walletInfo.keys.publicKey = hederaAccount
+    }
+
     const currencyEngine = new HederaEngine(tools, walletInfo, opts)
 
     await currencyEngine.loadEngine(tools, walletInfo, opts)

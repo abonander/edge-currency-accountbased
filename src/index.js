@@ -9,11 +9,11 @@ import { makeBinancePlugin } from './binance/bnbPlugin.js'
 import { makeEosPlugin } from './eos/eosPlugin.js'
 import { makeEthereumPlugin } from './ethereum/ethPlugin.js'
 import { makeFioPlugin } from './fio/fioPlugin'
+import { makeHederaPlugin } from './hedera/hederaPlugin'
 import { makeRskPlugin } from './rsk/rskPlugin.js'
 import { makeStellarPlugin } from './stellar/stellarPlugin.js'
 import { makeTezosPlugin } from './tezos/tezosPlugin.js'
 import { makeRipplePlugin } from './xrp/xrpPlugin.js'
-import { makeHederaPlugin } from './hedera/hederaPlugin'
 
 const plugins = {
   eos: makeEosPlugin,

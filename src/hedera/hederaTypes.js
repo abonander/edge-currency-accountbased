@@ -2,7 +2,7 @@
  * Created by paul on 8/26/17.
  */
 // @flow
-import { type AccountId } from '@hashgraph/sdk';
+import { type AccountId } from '@hashgraph/sdk'
 
 export type HederaSettings = {
   hederaNodes: {

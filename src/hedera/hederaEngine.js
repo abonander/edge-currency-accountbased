@@ -3,33 +3,19 @@
  */
 // @flow
 
-import { bns } from 'biggystring'
+import * as hedera from '@hashgraph/sdk'
 // import { currencyInfo } from './hederaInfo.js'
 import {
   type EdgeCurrencyEngineOptions,
   type EdgeSpendInfo,
   type EdgeTransaction,
   type EdgeWalletInfo,
-  InsufficientFundsError,
   NoAmountSpecifiedError
 } from 'edge-core-js/types'
 
 import { CurrencyEngine } from '../common/engine.js'
-import { asyncWaterfall, getDenomInfo, promiseAny } from '../common/utils.js'
 import { HederaPlugin } from '../hedera/hederaPlugin.js'
-import {
-  type HederaAccount,
-  type HederaOperation,
-  type HederaTransaction,
-  type HederaWalletOtherData
-} from './hederaTypes.js'
-
-import * as hedera from '@hashgraph/sdk'
-
-type HederaServerFunction =
-  | 'payments'
-  | 'loadAccount'
-  | 'submitTransaction'
+import { type HederaWalletOtherData } from './hederaTypes.js'
 
 export class HederaEngine extends CurrencyEngine {
   hederaPlugin: HederaPlugin
@@ -77,14 +63,14 @@ export class HederaEngine extends CurrencyEngine {
     console.log('hedera updateBalance', this)
     const balance = (await this.client.getAccountBalance()).toString()
     this.log('got balance:', balance)
-    this.walletLocalData.totalBalances['XHB'] = balance
-    this.currencyEngineCallbacks.onBalanceChanged('XHB', balance)
+    this.walletLocalData.totalBalances['HBAR'] = balance
+    this.currencyEngineCallbacks.onBalanceChanged('HBAR', balance)
   }
 
   async makeSpend (edgeSpendInfoIn: EdgeSpendInfo): Promise<EdgeTransaction> {
     const {
       edgeSpendInfo,
-      currencyCode,
+      currencyCode
     } = super.makeSpend(edgeSpendInfoIn)
 
     if (edgeSpendInfo.spendTargets.length !== 1) {
@@ -107,21 +93,28 @@ export class HederaEngine extends CurrencyEngine {
       .addRecipient(publicAddress, hbar)
       .setTransactionFee(txnFee)
       .build()
-      .toBytes()
+
+    const txnId = transferTx.getTransactionId()
+    const { account: { shard, realm, account }, validStartSeconds, validStartNanos } = txnId
+
+    const txnDate = new Date(
+      (validStartSeconds * 1000) + Math.floor(validStartNanos / 1000000)
+    )
 
     const edgeTransaction: EdgeTransaction = {
-      txid: '', // txid
-      date: 0, // date
+      txid: `${shard}.${realm}.${account}@${validStartSeconds}.${validStartNanos}`, // txid
+      date: txnDate.getTime(), // date
       currencyCode, // currencyCode
       blockHeight: 0, // blockHeight
       nativeAmount: hbar.negated().asTinybar().toString(),
-      networkFee: txnFee.asTinybar().toString(), // networkFee
+      // UI shows the fee subtracted from the sent amount which doesn't make sense here
+      networkFee: '0', // networkFee
       ourReceiveAddresses: [], // ourReceiveAddresses
       signedTx: '', // signedTx
       otherParams: {
         fromAddress: this.walletLocalData.publicKey,
         toAddress: publicAddress,
-        transferTx
+        transferTx: transferTx.toBytes()
       }
     }
 
@@ -155,6 +148,8 @@ export class HederaEngine extends CurrencyEngine {
       this.log(e)
       throw e
     }
+    // must be > 0 to not show "Synchronizing"
+    edgeTransaction.blockHeight = 1
     return edgeTransaction
   }
 
